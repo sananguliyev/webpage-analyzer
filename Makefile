@@ -16,7 +16,7 @@ docker-run: docker-build
 	docker run -p 8080:8080 webpage-analyzer
 
 lint:
-	go vet ./...
+	golangci-lint run ./...
 
 clean:
 	rm -rf bin/

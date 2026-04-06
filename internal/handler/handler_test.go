@@ -94,7 +94,7 @@ func TestAnalyze_ValidURL(t *testing.T) {
 	// Create a test HTML server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html>
+		_, _ = w.Write([]byte(`<!DOCTYPE html>
 <html>
 <head><title>Test Page</title></head>
 <body>
@@ -129,7 +129,7 @@ func TestAnalyze_ValidURL(t *testing.T) {
 func TestAnalyze_NonHTMLContent(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"key": "value"}`))
+		_, _ = w.Write([]byte(`{"key": "value"}`))
 	}))
 	defer ts.Close()
 
@@ -172,7 +172,7 @@ func TestAnalyze_UnreachableURL(t *testing.T) {
 func TestAnalyze_URLWithoutScheme(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html><html><head><title>OK</title></head></html>`))
+		_, _ = w.Write([]byte(`<!DOCTYPE html><html><head><title>OK</title></head></html>`))
 	}))
 	defer ts.Close()
 
@@ -197,15 +197,15 @@ func TestAnalyze_LargeBody(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		// Write more than 5MB
-		w.Write([]byte("<!DOCTYPE html><html><body>"))
+		_, _ = w.Write([]byte("<!DOCTYPE html><html><body>"))
 		buf := make([]byte, 1024)
 		for i := range buf {
 			buf[i] = 'a'
 		}
 		for i := 0; i < 6000; i++ {
-			w.Write(buf)
+			_, _ = w.Write(buf)
 		}
-		w.Write([]byte("</body></html>"))
+		_, _ = w.Write([]byte("</body></html>"))
 	}))
 	defer ts.Close()
 
@@ -227,7 +227,7 @@ func TestAnalyze_LargeBody(t *testing.T) {
 func TestAnalyze_WithLoginForm(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html><html><body>
+		_, _ = w.Write([]byte(`<!DOCTYPE html><html><body>
 			<form action="/login" method="POST">
 				<input type="text" name="username">
 				<input type="password" name="password">
@@ -255,7 +255,7 @@ func TestAnalyze_WithLoginForm(t *testing.T) {
 func TestAnalyze_WhitespaceURL(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<!DOCTYPE html><html><head><title>OK</title></head></html>`))
+		_, _ = w.Write([]byte(`<!DOCTYPE html><html><head><title>OK</title></head></html>`))
 	}))
 	defer ts.Close()
 

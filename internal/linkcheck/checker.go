@@ -70,7 +70,7 @@ func (c *Checker) checkOne(ctx context.Context, link model.LinkResult) model.Lin
 		result.Error = err.Error()
 		return result
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// HEAD returned 405 Method Not Allowed → retry with GET
 	if resp.StatusCode == http.StatusMethodNotAllowed {
@@ -85,8 +85,8 @@ func (c *Checker) checkOne(ctx context.Context, link model.LinkResult) model.Lin
 			result.Error = err.Error()
 			return result
 		}
-		io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
-		resp.Body.Close()
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
+		_ = resp.Body.Close()
 	}
 
 	result.StatusCode = resp.StatusCode

@@ -29,7 +29,7 @@ func (f *Fetcher) Fetch(ctx context.Context, rawURL string) ([]byte, *url.URL, e
 		}
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	contentType := resp.Header.Get("Content-Type")
 	if contentType != "" && !strings.Contains(strings.ToLower(contentType), "text/html") {
