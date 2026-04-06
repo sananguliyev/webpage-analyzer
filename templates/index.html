@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Page Analyzer</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; color: #333; background: #f8f9fa; }
+        h1 { margin-bottom: 1.5rem; color: #212529; }
+        .form-group { margin-bottom: 1rem; display: flex; gap: 0.5rem; }
+        input[type="text"] { flex: 1; padding: 0.75rem; font-size: 1rem; border: 1px solid #ced4da; border-radius: 4px; }
+        button { padding: 0.75rem 1.5rem; font-size: 1rem; background: #0d6efd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0b5ed7; }
+        .error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .results { margin-top: 1.5rem; }
+        .card { background: #fff; border: 1px solid #dee2e6; border-radius: 4px; padding: 1.25rem; margin-bottom: 1rem; }
+        .card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #495057; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #dee2e6; }
+        th { font-weight: 600; color: #495057; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.85rem; font-weight: 500; }
+        .badge-success { background: #d1e7dd; color: #0f5132; }
+        .badge-danger { background: #f8d7da; color: #842029; }
+        .badge-internal { background: #cff4fc; color: #055160; }
+        .badge-external { background: #fff3cd; color: #664d03; }
+        .metric { font-size: 1.5rem; font-weight: 700; color: #212529; }
+        .metric-label { font-size: 0.85rem; color: #6c757d; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        .link-url { word-break: break-all; font-size: 0.9rem; }
+        .note { font-size: 0.85rem; color: #6c757d; margin-top: 0.5rem; }
+        .examples { list-style: none; padding: 0; }
+        .examples li { padding: 0.4rem 0; }
+        .examples a { color: #0d6efd; text-decoration: none; cursor: pointer; }
+        .examples a:hover { text-decoration: underline; }
+        .loading { display: none; align-items: center; gap: 0.5rem; margin-top: 1rem; color: #6c757d; }
+        .loading.active { display: flex; }
+        .spinner { width: 1.2rem; height: 1.2rem; border: 2px solid #dee2e6; border-top-color: #0d6efd; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <h1>Web Page Analyzer</h1>
+
+    <form method="POST" action="/analyze" id="analyze-form">
+        <div class="form-group">
+            <input type="text" name="url" placeholder="Enter URL (e.g., https://example.com)" value="{{.URL}}" autofocus>
+            <button type="submit">Analyze</button>
+        </div>
+    </form>
+
+    <div class="loading" id="loading"><div class="spinner"></div>Analyzing page...</div>
+    <script>document.querySelector('#analyze-form').addEventListener('submit',function(){document.getElementById('loading').classList.add('active')})</script>
+
+    {{if not .Analysis}}{{if not .Error}}
+    <div class="card" style="margin-top:1.5rem">
+        <h2>Try these examples</h2>
+        <ul class="examples">
+            <li><a href="#" onclick="document.querySelector('input[name=url]').value=this.dataset.url;document.getElementById('analyze-form').submit()" data-url="https://github.com/login">github.com/login</a> — login form detection</li>
+            <li><a href="#" onclick="document.querySelector('input[name=url]').value=this.dataset.url;document.getElementById('analyze-form').submit()" data-url="https://www.home24.help/">home24.help</a> — multiple links to analyze</li>
+            <li><a href="#" onclick="document.querySelector('input[name=url]').value=this.dataset.url;document.getElementById('analyze-form').submit()" data-url="https://this-does-not-exist.invalid">this-does-not-exist.invalid</a> — error handling</li>
+        </ul>
+        <p class="note" style="margin-top:1rem">This tool fetches raw HTML over HTTP — it does not use a browser engine. Single-page applications (React, Angular, Vue, etc.) that render content via JavaScript will not be fully analyzed.</p>
+    </div>
+    {{end}}{{end}}
+
+    {{if .Error}}
+    <div class="error">{{.Error}}</div>
+    {{end}}
+
+    {{if .Analysis}}
+    <div class="results">
+        <div class="card">
+            <h2>Page Information</h2>
+            <table>
+                <tr><th>HTML Version</th><td>{{.Analysis.HTMLVersion}}</td></tr>
+                <tr><th>Page Title</th><td>{{if .Analysis.Title}}{{.Analysis.Title}}{{else}}<em>No title found</em>{{end}}</td></tr>
+                <tr><th>Login Form</th><td>{{if .Analysis.HasLoginForm}}<span class="badge badge-success">Detected</span>{{else}}<span class="badge badge-danger">Not detected</span>{{end}}</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Headings</h2>
+            {{if .Analysis.Headings}}
+            <table>
+                <tr><th>Level</th><th>Count</th></tr>
+                {{range $tag, $count := .Analysis.Headings}}
+                <tr><td>{{$tag}}</td><td>{{$count}}</td></tr>
+                {{end}}
+            </table>
+            {{else}}
+            <p>No headings found.</p>
+            {{end}}
+        </div>
+
+        <div class="card">
+            <h2>Links Summary</h2>
+            <div class="metrics-grid">
+                <div><div class="metric">{{.Analysis.TotalLinks}}</div><div class="metric-label">Total Links</div></div>
+                <div><div class="metric">{{.Analysis.InternalLinks}}</div><div class="metric-label">Internal</div></div>
+                <div><div class="metric">{{.Analysis.ExternalLinks}}</div><div class="metric-label">External</div></div>
+            </div>
+            {{if gt .Analysis.CheckedLinks 0}}
+            <p class="note">Checked {{.Analysis.CheckedLinks}} of {{.Analysis.TotalLinks}} links for accessibility.</p>
+            {{end}}
+        </div>
+
+        {{if .Analysis.Links}}
+        <div class="card">
+            <h2>Link Details</h2>
+            <table>
+                <tr><th>URL</th><th>Type</th><th>Status</th></tr>
+                {{range .Analysis.Links}}
+                <tr>
+                    <td class="link-url">{{.URL}}</td>
+                    <td>{{if .IsInternal}}<span class="badge badge-internal">Internal</span>{{else}}<span class="badge badge-external">External</span>{{end}}</td>
+                    <td>
+                        {{if .Error}}
+                            <span class="badge badge-danger" title="{{.Error}}">Inaccessible</span>
+                        {{else if .IsAccessible}}
+                            <span class="badge badge-success">{{.StatusCode}}</span>
+                        {{else if gt .StatusCode 0}}
+                            <span class="badge badge-danger">{{.StatusCode}}</span>
+                        {{else}}
+                            <span class="badge badge-danger">Unchecked</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </table>
+            <p class="note">Note: Accessibility results may be inaccurate. Links can appear inaccessible due to Cloudflare or CAPTCHA challenges, firewall or geo-blocking on the running environment, request timeouts (10s limit), bot detection, rate limiting, or servers that reject non-browser requests.</p>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+</body>
+</html>
